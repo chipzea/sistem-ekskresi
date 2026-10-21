@@ -2,6 +2,16 @@
 function go(v){location.href='index.html'+(v?'#'+v:'')}
 const SL={L:{1:38,4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100},S:{16:6,47:26,49:11,56:53,62:19,64:60,87:24,93:73,95:75,98:78}};
 const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+/* Pemilihan soal: soal tidak muncul lagi untuk kelompok lain di kotak yang sama.
+   Daftar soal yang sudah muncul (S.ulUsed) ikut tersimpan antarhalaman dan antarpermainan. */
+function katKotak(q){const t=SL.L[q]||SL.S[q];if(!t)return'N';return Math.abs(t-q)>=20?'H':'M'}
+function pilihSoal(q){const kat=katKotak(q);S.ulUsed=S.ulUsed||[];const used=new Set(S.ulUsed);
+let pick=BANK.find(b=>b.no===q&&!used.has(b.id));
+if(!pick){let pool=BANK.filter(b=>b.kat===kat&&!used.has(b.id));
+if(!pool.length){S.ulUsed=S.ulUsed.filter(id=>{const b=BANK.find(x=>x.id===id);return b&&b.kat!==kat});pool=BANK.filter(b=>b.kat===kat&&b.id!==S.ulLast);if(!pool.length)pool=BANK.filter(b=>b.kat===kat)}
+pick=pool[Math.floor(Math.random()*pool.length)]}
+S.ulUsed.push(pick.id);S.ulLast=pick.id;
+return{l:pick.lv,q:pick.q,a:pick.a,w:pick.s,e:pick.e,en:pick.bhs==='EN'}}
 function ular(){
 const W=['#22a45d','#e08e00','#8b5cf6','#ec4899','#14b8a6','#3b82f6'],SC=['#e53935','#8e24aa','#1e88e5','#fb8c00','#43a047','#d81b60','#00897b','#f4511e','#5e35b1','#6d4c41'];
 let n=(S.nk>=2?Math.min(S.nk,12):S.kel>=2?Math.min(S.kel,12):4),dpos,turn,busy,won,logs;
@@ -48,7 +58,7 @@ bu.classList.toggle('up',up);bu.classList.toggle('dn',!up);
 if(up){bu.style.top='auto';bu.style.bottom=(H-pt+TL)+'px'}else{bu.style.bottom='auto';bu.style.top=(pb+TL)+'px'}
 const tx=Math.max(26,Math.min(bw-6,px-left));bu.querySelector('.tl').style.left=(tx-22)+'px';
 const r=bu.getBoundingClientRect();if(r.top<6)scrollBy({top:r.top-10,behavior:'smooth'});else if(r.bottom>innerHeight-6)scrollBy({top:r.bottom-innerHeight+10,behavior:'smooth'})}
-function ask(q,from){return new Promise(res=>{const d=QS[q],opts=sh([d.a,...d.w]),lad=SL.L[q],sn=SL.S[q],kind=lad?'🪜 Kaki tangga':sn?'🐍 Kepala ular':'Kotak biasa',len=lad?lad-q:sn?q-sn:0;
+function ask(q,from){return new Promise(res=>{const d=pilihSoal(q),opts=sh([d.a,...d.w]),lad=SL.L[q],sn=SL.S[q],kind=lad?'🪜 Kaki tangga':sn?'🐍 Kepala ular':'Kotak biasa',len=lad?lad-q:sn?q-sn:0;
 const cat=(lad||sn)?(len>=20?'HOTS':'MOTS'):(d.l==='C3'?'MOTS':'LOTS'),old=g$('bub');if(old)old.remove();
 const bu=document.createElement('div');bu.id='bub';bu.className='bub up';
 bu.innerHTML=`<div class="bbox"><div class="bchips"><span class="chip">Kotak ${q}</span><span class="chip">${kind}</span><span class="lg ${cat.toLowerCase()}">${d.l} · ${cat}</span><span class="lg ${d.en?'en':'id'}">${d.en?'EN':'ID'}</span></div><div class="bq"><b>Kelompok ${turn+1}:</b> ${d.q}</div>${opts.map((o,i)=>`<button class="bo" data-i="${i}">${'ABCD'[i]}. ${o}</button>`).join('')}<div id="qfb"></div></div><div class="tl"></div>`;
